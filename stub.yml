@@ -1,0 +1,45 @@
+---
+name: cf-bluebox
+director_uuid: a21506d9-4153-490b-ad58-35b45e15162a
+releases:
+  - name: cf
+    version: latest
+
+update:
+  serial: false
+
+
+properties:
+  template_only:
+    public_ip: 173.247.112.69
+    openstack:
+      availability_zone:
+      availability_zone2:
+networks:
+
+- name: floating
+  type: vip
+  cloud_properties:
+    net_id: 5ef3a8ad-9dd7-45bd-a01c-3dc7f8746208
+
+- name: cf1
+  subnets: 
+  - range: 10.230.5.0/24
+    reserved:
+    - 10.230.5.1 - 10.230.5.50
+    - 10.230.5.110 - 10.230.5.254
+    static:
+    - 10.230.5.51 - 10.230.5.79
+    cloud_properties: 
+      net_id: e87c690f-413b-4dcf-ac2b-5468a2df0524
+      security_groups:
+      - cf-public
+      - cf-private
+
+- name: cf2
+  subnets: 
+  - range: 10.230.6.0/24
+    static:
+    - 10.230.6.51 - 10.230.6.79
+    cloud_properties: 
+      net_id: fake_id 

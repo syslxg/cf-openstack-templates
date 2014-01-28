@@ -1,0 +1,396 @@
+meta:
+  zones:
+    z1: (( properties.template_only.openstack.availability_zone ))
+    z2: (( properties.template_only.openstack.availability_zone2 ))
+  public_ip: (( properties.template_only.public_ip ))
+  fog_config:
+    provider: Local
+    local_root: /var/vcap/store
+  stemcell:
+    name: bosh-openstack-kvm-ubuntu
+    version: latest
+
+releases:
+  - name: cf
+    version: latest
+networks: (( merge ))
+
+properties:
+  template_only: (( merge ))
+  ssl:
+    skip_cert_verify: true
+  domain: (( meta.public_ip ".xip.io" ))
+  system_domain_organization: pivotal
+  disk_quota_enabled: false
+  dea_next:
+    evacuation_bail_out_time_in_seconds: 0
+    memory_mb: 8192
+    disk_mb: 16384
+    kernel_network_tuning_enabled: false
+
+  loggregator_endpoint:
+    shared_secret: loggregator-secret
+
+  nats:
+    user: nats
+    password: nats
+    address: (( jobs.nats_z1.networks.cf1.static_ips.[0] ))
+
+  cc:
+    default_quota_definition: default
+    default_app_memory: 256
+    bulk_api_password: bulk-password
+    staging_upload_user: upload-user
+    staging_upload_password: upload-password
+    db_encryption_key: db-encryption-key
+
+    resource_pool:
+      fog_connection: (( meta.fog_config ))
+    packages:
+      fog_connection: (( meta.fog_config ))
+    droplets:
+      fog_connection: (( meta.fog_config ))
+    buildpacks:
+      fog_connection: (( meta.fog_config ))
+
+  uaa:
+    catalina_opts: -Xmx384m -XX:MaxPermSize=128m
+    jwt:
+      signing_key: |
+        -----BEGIN RSA PRIVATE KEY-----
+        MIICXAIBAAKBgQDHFr+KICms+tuT1OXJwhCUmR2dKVy7psa8xzElSyzqx7oJyfJ1
+        JZyOzToj9T5SfTIq396agbHJWVfYphNahvZ/7uMXqHxf+ZH9BL1gk9Y6kCnbM5R6
+        0gfwjyW1/dQPjOzn9N394zd2FJoFHwdq9Qs0wBugspULZVNRxq7veq/fzwIDAQAB
+        AoGBAJ8dRTQFhIllbHx4GLbpTQsWXJ6w4hZvskJKCLM/o8R4n+0W45pQ1xEiYKdA
+        Z/DRcnjltylRImBD8XuLL8iYOQSZXNMb1h3g5/UGbUXLmCgQLOUUlnYt34QOQm+0
+        KvUqfMSFBbKMsYBAoQmNdTHBaz3dZa8ON9hh/f5TT8u0OWNRAkEA5opzsIXv+52J
+        duc1VGyX3SwlxiE2dStW8wZqGiuLH142n6MKnkLU4ctNLiclw6BZePXFZYIK+AkE
+        xQ+k16je5QJBAN0TIKMPWIbbHVr5rkdUqOyezlFFWYOwnMmw/BKa1d3zp54VP/P8
+        +5aQ2d4sMoKEOfdWH7UqMe3FszfYFvSu5KMCQFMYeFaaEEP7Jn8rGzfQ5HQd44ek
+        lQJqmq6CE2BXbY/i34FuvPcKU70HEEygY6Y9d8J3o6zQ0K9SYNu+pcXt4lkCQA3h
+        jJQQe5uEGJTExqed7jllQ0khFJzLMx0K6tj0NeeIzAaGCQz13oo2sCdeGRHO4aDh
+        HH6Qlq/6UOV5wP8+GAcCQFgRCcB+hrje8hfEEefHcFpyKH+5g1Eu1k0mLrxK2zd+
+        4SlotYRHgPCEubokb2S1zfZDWIXW3HmggnGgM949TlY=
+        -----END RSA PRIVATE KEY-----
+      verification_key: |
+        -----BEGIN PUBLIC KEY-----
+        MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDHFr+KICms+tuT1OXJwhCUmR2d
+        KVy7psa8xzElSyzqx7oJyfJ1JZyOzToj9T5SfTIq396agbHJWVfYphNahvZ/7uMX
+        qHxf+ZH9BL1gk9Y6kCnbM5R60gfwjyW1/dQPjOzn9N394zd2FJoFHwdq9Qs0wBug
+        spULZVNRxq7veq/fzwIDAQAB
+        -----END PUBLIC KEY-----
+    cc:
+      client_secret: cc-secret
+    admin:
+      client_secret: admin-secret
+    batch:
+      username: batch-username
+      password: batch-password
+    clients:
+      login:
+        secret: login-secret
+      developer_console:
+        secret: console-secret
+      app-direct:
+        secret: app-direct-secret
+      support-services:
+        secret: support-services-secret
+      servicesmgmt:
+        secret: servicesmgmt-secret
+      space-mail:
+        secret: space-mail-secret
+    scim:
+      users:
+      - admin|admin|scim.write,scim.read,openid,cloud_controller.admin
+    no_ssl: true
+
+  login:
+    catalina_opts: -Xmx384m -XX:MaxPermSize=128m
+    protocol: http
+
+  router:
+    status:
+      user: router
+      password: router
+
+  ccdb:
+    db_scheme: postgres
+    address: (( properties.databases.address ))
+    port: 5524
+    roles:
+      - tag: admin
+        name: ccadmin
+        password: admin
+    databases:
+      - tag: cc
+        name: ccdb
+        citext: true
+
+  uaadb:
+    db_scheme: postgresql
+    address: (( properties.databases.address ))
+    port: 5524
+    roles:
+      - tag: admin
+        name: uaaadmin
+        password: admin
+    databases:
+      - tag: uaa
+        name: uaadb
+        citext: true
+
+  databases:
+    db_scheme: postgres
+    address: (( jobs.postgres_z1.networks.cf1.static_ips.[0] ))
+    port: 5524
+    roles:
+      - tag: admin
+        name: ccadmin
+        password: admin
+      - tag: admin
+        name: uaaadmin
+        password: admin
+    databases:
+      - tag: cc
+        name: ccdb
+        citext: true
+      - tag: uaa
+        name: uaadb
+        citext: true
+
+
+compilation:
+  cloud_properties:
+    instance_type: m1.medium
+    availability_zone: (( meta.zones.z1 ))
+
+resource_pools:
+  - name: small_z1
+    cloud_properties:
+      instance_type: m1.small
+      availability_zone: (( meta.zones.z1 ))
+
+  - name: small_z2
+    cloud_properties:
+      instance_type: m1.small
+      availability_zone: (( meta.zones.z2 ))
+
+  - name: medium_z1
+    cloud_properties:
+      instance_type: m1.medium
+      availability_zone: (( meta.zones.z1 ))
+
+  - name: medium_z2
+    cloud_properties:
+      instance_type: m1.medium
+      availability_zone: (( meta.zones.z2 ))
+
+  - name: large_z1
+    cloud_properties:
+      instance_type: m1.medium
+      availability_zone: (( meta.zones.z1 ))
+
+  - name: large_z2
+    cloud_properties:
+      instance_type: m1.medium
+      availability_zone: (( meta.zones.z2 ))
+
+  - name: runner_z1
+    cloud_properties:
+      instance_type: m1.large
+      availability_zone: (( meta.zones.z1 ))
+
+  - name: runner_z2
+    cloud_properties:
+      instance_type: m1.large
+      availability_zone: (( meta.zones.z2 ))
+
+  - name: router_z1
+    cloud_properties:
+      instance_type: m1.medium
+      availability_zone: (( meta.zones.z1 ))
+
+  - name: router_z2
+    cloud_properties:
+      instance_type: m1.medium
+      availability_zone: (( meta.zones.z2 ))
+
+
+# set up static IPs
+jobs:
+  - name: nats_z1
+    instances: 1
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(1) ))
+
+  - name: nats_z2
+    instances: 0
+    networks:
+      - name: cf2
+        static_ips: (( static_ips(1) ))
+
+  # set up static IP for loggregator trafficcontroller
+  - name: loggregator_trafficcontroller_z1
+    instances: 1
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(2) ))
+
+  - name: loggregator_trafficcontroller_z2
+    instances: 0
+    networks:
+      - name: cf2
+        static_ips: (( static_ips(2) ))
+
+  # set up static IP for loggregator
+  - name: loggregator_z1
+    instances: 1
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(3, 4) ))
+
+  # set up static IP for loggregator
+  - name: loggregator_z2
+    instances: 0
+    networks:
+      - name: cf2
+        static_ips: (( static_ips(3, 4) ))
+
+  - name: etcd_leader_z1
+    instances: 1
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(9) ))
+
+  - name: etcd_z1
+    instances: 0
+    networks:
+      - name: cf1
+        static_ips: []
+
+  - name: etcd_z2
+    instances: 0
+    networks:
+      - name: cf2
+        static_ips: []
+
+  # only need one router, and set up static IPs
+  - name: router_z1
+    instances: 1
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(5) ))
+  - name: router_z2
+    instances: 0
+    networks:
+      - name: cf2
+        static_ips: (( static_ips(5) ))
+
+  # only need one runner
+  #
+  # also give it a static IP to make testing easier
+  - name: runner_z1
+    instances: 1
+    networks:
+    - name: cf1
+      static_ips: (( static_ips(6) ))
+  - name: runner_z2
+    instances: 0
+
+  # set up static IP for postgres
+  - name: postgres_z1
+    instances: 1
+    networks:
+    - name: cf1
+      static_ips: (( static_ips(7) ))
+
+  # only need one taskmaster
+  - name: taskmaster_z1
+    instances: 1
+  - name: taskmaster_z2
+    instances: 0
+
+  # only need one uaa
+  - name: uaa_z1
+    instances: 1
+  - name: uaa_z2
+    instances: 0
+
+  # add a persistent disk to the CC, and only need one
+  - name: api_z1
+    persistent_disk: 4096
+  - name: api_z2
+    persistent_disk: 4096
+    instances: 0
+  - name: clock_global
+    persistent_disk: 4096
+
+  # smaller persistent disk for logs, and set up static IPs
+  - name: logs_z1
+    instances: 1
+    persistent_disk: 4096
+    networks:
+      - name: cf1
+        static_ips: (( static_ips(0) ))
+  - name: logs_z2
+    instances: 0
+    persistent_disk: 4096
+    networks:
+      - name: cf2
+        static_ips: (( static_ips(0) ))
+
+  # no collector
+  - name: stats_z1
+    instances: 0
+  - name: stats_z2
+    instances: 0
+
+  - name: ha_proxy_z1
+    instances: 1
+    networks:
+      - name: cf1
+        default: [dns, gateway]
+      - name: floating
+        static_ips:
+          -  (( meta.public_ip ))
+    properties:
+      ha_proxy:
+        ssl_pem: |
+          -----BEGIN CERTIFICATE-----
+          MIICLzCCAZgCCQCSoIG3LoeSMTANBgkqhkiG9w0BAQUFADBcMQswCQYDVQQGEwJV
+          UzELMAkGA1UECBMCQ0ExFjAUBgNVBAcTDVNhbiBGcmFuY2lzY28xEDAOBgNVBAoT
+          B1Bpdm90YWwxFjAUBgNVBAsTDUNsb3VkIEZvdW5kcnkwHhcNMTMxMDE3MjMxNzM5
+          WhcNMTQxMDE3MjMxNzM5WjBcMQswCQYDVQQGEwJVUzELMAkGA1UECBMCQ0ExFjAU
+          BgNVBAcTDVNhbiBGcmFuY2lzY28xEDAOBgNVBAoTB1Bpdm90YWwxFjAUBgNVBAsT
+          DUNsb3VkIEZvdW5kcnkwgZ8wDQYJKoZIhvcNAQEBBQADgY0AMIGJAoGBANqyjJMH
+          FDbJ4XM2vLRxz6i82Gd2Y2dnAKYgu67FgheHGQJSv38lvn8JrAOBXu2QJgP8sJa+
+          XqUWUTMo9BWvhvedQLojtcpLdULc0FhlIXn8bThGlTQyrSg9QJobhQZGziFVrdQM
+          UZy4X+s6A2Szb9iOg3TYibnnfnuvdZli83eRAgMBAAEwDQYJKoZIhvcNAQEFBQAD
+          gYEAbFu65WT+czpiJqHhNz5AnGYA8kieVlV7KhcljLtsU4Sxut5Vq9uXFBE09KCg
+          YkyZ9KfzXArTeRCfcbm5xq12I+1nf6q0QjT1y3P6ztax0rpyb0i+4GWvA+ruMhfx
+          n4QM1MkiJVYBGKkXFZDd1zsdR3pY4vm1uiMY75IvJQfgb08=
+          -----END CERTIFICATE-----
+          -----BEGIN RSA PRIVATE KEY-----
+          MIICXQIBAAKBgQDasoyTBxQ2yeFzNry0cc+ovNhndmNnZwCmILuuxYIXhxkCUr9/
+          Jb5/CawDgV7tkCYD/LCWvl6lFlEzKPQVr4b3nUC6I7XKS3VC3NBYZSF5/G04RpU0
+          Mq0oPUCaG4UGRs4hVa3UDFGcuF/rOgNks2/YjoN02Im55357r3WZYvN3kQIDAQAB
+          AoGAa88G81fTBCtDA1vhbIaKWuE1QNOgrxGcxUhvnPlqZxTHJFkMY66EmPV4oYW9
+          +RhNVTvVBYq092boAnNW1/Xebvrk1SnBDkrLntnGPmExkatOkPTFFlNXfePu6qOJ
+          ULwYg8rKRwpvLoQXxbzMDXApPBifBNWGHVneGuHLpwPEQgECQQD0IJOecEyorrCR
+          6+wmJBS/IwqQO0Ooj7kZEg65MHi9exVe+XFvP0lW2NAUsDuBLz79hjslSqIJjRG8
+          c6q36oqhAkEA5VVeEip+T4DV12I5A5maGexVMeC92K7EGU/H8YhltxVZ/RtNngdT
+          3r19WeDbDF7R5CJy2f7AYullk3S6fkk28QJBALdEiW1k4rezRMyW7tYHOifvN2vl
+          gbpWAt/GRZVSxSGB+B4vZq/cM8NlynftgQ5PGJucnGQ3bgN7irgNoTimc2ECQFMX
+          QBMy5DroAhKcmu2r/IKB90gwFnjosVI+bsIbWkcgbE9hUhj8rK2aWE11Q8hSnpea
+          x6QmQgxUZiIr+9n/qvECQQDiDIeSmo2mRYsaqr4CQ3Ak+EDjsm9XTpXHuqm+xgFO
+          iDIeQCWd3/twqdDTR7FaDE7Q0i559u7A1yLumUn8caLF
+          -----END RSA PRIVATE KEY-----
+
+  # using login template, that supports self-signed certs
+  - name: login_z1
+    template: login
+
+  # only one hm9000
+  - name: hm9000_z2
+    instances: 0
