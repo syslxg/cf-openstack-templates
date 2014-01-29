@@ -177,7 +177,7 @@ resource_pools:
 
   - name: medium_z1
     cloud_properties:
-      instance_type: m1.medium
+      instance_type: m1.small
       availability_zone: (( meta.zones.z1 ))
 
   - name: medium_z2
@@ -187,7 +187,7 @@ resource_pools:
 
   - name: large_z1
     cloud_properties:
-      instance_type: m1.medium
+      instance_type: m1.small
       availability_zone: (( meta.zones.z1 ))
 
   - name: large_z2
@@ -207,7 +207,7 @@ resource_pools:
 
   - name: router_z1
     cloud_properties:
-      instance_type: m1.medium
+      instance_type: m1.small
       availability_zone: (( meta.zones.z1 ))
 
   - name: router_z2
@@ -256,6 +256,9 @@ jobs:
     networks:
       - name: cf2
         static_ips: (( static_ips(3, 4) ))
+
+  - name: hm9000_z2
+    instances: 0
 
   - name: etcd_leader_z1
     instances: 1
@@ -390,7 +393,3 @@ jobs:
   # using login template, that supports self-signed certs
   - name: login_z1
     template: login
-
-  # only one hm9000
-  - name: hm9000_z2
-    instances: 0

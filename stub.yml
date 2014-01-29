@@ -19,8 +19,7 @@ networks:
 
 - name: floating
   type: vip
-  cloud_properties:
-    net_id: 5ef3a8ad-9dd7-45bd-a01c-3dc7f8746208
+  cloud_properties: {}
 
 - name: cf1
   subnets: 
