@@ -1,0 +1,32 @@
+#!/usr/bin/env ruby
+
+require 'yaml'
+
+yml = YAML::load_file "cf-openstack-tmp.yml"
+stub = YAML::load_file "stub.yml"
+
+#merge update section
+yml["update"].merge! stub["update"]
+
+#patch haproxy network settings
+index_haproxy = yml["jobs"].index { |j| j["name"] == "ha_proxy_z1" }
+
+if index_haproxy.nil? then
+  puts "job 'ha_proxy_z1' not found"
+  exit 1
+end
+
+yml["jobs"][index_haproxy]["networks"] = stub["jobs"][0]["networks"]
+
+index_floating = yml["jobs"][index_haproxy]["networks"].index { |net| net["name"] == "floating" }
+if index_floating.nil? then
+  puts "network 'floating' not found"
+  exit 1
+end
+
+ip=stub["properties"]["template_only"]["public_ip"]
+yml["jobs"][index_haproxy]["networks"][index_floating]["static_ips"] = ip
+
+File.open("cf-openstack.yml", "w") do |out|
+  YAML::dump yml, out
+end

@@ -1,1 +1,4 @@
-spiff merge ~/workspace/cf-release/templates/cf-{deployment,jobs,properties,minimal-dev}.yml cf-infrastructure-openstack.yml stub.yml > cf-bluebox.yml
+spiff merge ~/workspace/cf-release/templates/cf-{deployment,jobs,properties,minimal-dev}.yml cf-infrastructure-openstack.yml stub.yml > cf-openstack-tmp.yml
+./patch_yml
+rm -f cf-openstack-tmp.yml
+echo "new manifest file cf-openstack.yml saved"

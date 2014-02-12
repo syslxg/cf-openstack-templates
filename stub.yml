@@ -8,15 +8,14 @@ releases:
 update:
   serial: false
 
-
 properties:
   template_only:
     public_ip: 173.247.112.69
     openstack:
       availability_zone:
       availability_zone2:
-networks:
 
+networks:
 - name: floating
   type: vip
   cloud_properties: {}
@@ -32,8 +31,7 @@ networks:
     cloud_properties: 
       net_id: e87c690f-413b-4dcf-ac2b-5468a2df0524
       security_groups:
-      - cf-public
-      - cf-private
+      - cf-pub
 
 - name: cf2
   subnets: 
@@ -42,3 +40,11 @@ networks:
     - 10.230.6.51 - 10.230.6.79
     cloud_properties: 
       net_id: fake_id 
+
+jobs:
+- name: ha_proxy_z1
+  networks:
+  - name: cf1
+    default: [dns, gateway]
+  - name: floating
+    static_ips:
